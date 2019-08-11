@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<inkscape-extension xmlns="http://www.inkscape.org/namespace/inkscape/extension">
+    <_name>Export to LibrePCB</_name>
+    <id>ch.dbrgn.svg2librepcb</id>
+
+    <dependency type="executable" location="extensions">svg2librepcb</dependency>
+
+    <param name="hdr_title" type="description" appearance="header">svg2librepcb</param>
+    <_param name="intro" type="description">Please fill out all fields marked with an asterisk (*).</_param>
+    <_param name="intro2" type="description">NOTE: Only paths will be exported! If you have objects (e.g. circles or text), you must convert them to paths or they will not be part of the export.</_param>
+
+    <_param name="hdr_metadata" type="description" appearance="header">Metadata</_param>
+    <param name="name" type="string" _gui-text="Name*" />
+    <param name="author" type="string" _gui-text="Author*" />
+    <param name="version" type="string" _gui-text="Version">0.1.0</param>
+    <param name="description" type="string" _gui-text="Description" />
+    <param name="keywords" type="string" _gui-text="Keywords">svg2librepcb</param>
+
+    <_param name="hdr_uuids" type="description" appearance="header">UUIDs</_param>
+    <_param name="intro_uuids" type="description">If you don't specify a package UUID, then a random UUID will be generated.</_param>
+    <param name="uuid-pkg" type="string" _gui-text="Package UUID" />
+    <param name="uuid-pkgcat" type="string" _gui-text="Package Category UUID*" />
+
+    <_param name="hdr_layers" type="description" appearance="header">Package Layers</_param>
+    <_param name="intro_layers" type="description">A footprint variant will be generated for each of the checked layer types.</_param>
+    <param name="layer-copper" type="boolean" _gui-text="Copper">true</param>
+    <param name="layer-placement" type="boolean" _gui-text="Placement (Silkscreen)">true</param>
+    <param name="layer-stopmask" type="boolean" _gui-text="Stopmask (Soldermask)">true</param>
+
+    <_param name="hdr_paths" type="description" appearance="header">Paths</_param>
+    <_param name="intro_paths" type="description">The output path must point to an already existing LibrePCB library.</_param>
+    <param name="outpath" type="string" _gui-text="Library Output Path*">/home/user/LibrePCB-Workspace/v0.1/libraries/local/YourLib.lplib/</param>
+
+    <!-- Menu entry -->
+    <effect needs-live-preview="false">
+        <object-type>path</object-type>
+        <effects-menu>
+            <submenu _name="Export" />
+        </effects-menu>
+    </effect>
+
+    <!-- Main handling binary -->
+    <script>
+        <command reldir="extensions">svg2librepcb</command>
+    </script>
+
+</inkscape-extension>
