@@ -8,5 +8,5 @@ edition = "2018"
 chrono = "0.4"
 clap = "2"
 quick-error = "1.2.2"
-svg2polylines = "0.5.1"
+svg2polylines = "0.5.2"
 uuid = { version = "0.7", features = ["v4"] }

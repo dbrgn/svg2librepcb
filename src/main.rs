@@ -1,3 +1,4 @@
+use std::f64::{INFINITY, NEG_INFINITY};
 use std::fs::read_to_string;
 
 use chrono::Utc;
@@ -80,6 +81,26 @@ fn make_package(
     lines
 }
 
+fn center_object(polylines: &mut [Polyline]) {
+    let (min_x, max_x, min_y, max_y) = polylines
+        .iter()
+        .flat_map(|polyline| polyline)
+        .fold((INFINITY, NEG_INFINITY, INFINITY, NEG_INFINITY), |acc, pair| (
+            f64::min(acc.0, pair.x),
+            f64::max(acc.1, pair.x),
+            f64::min(acc.2, pair.y),
+            f64::max(acc.3, pair.y),
+        ));
+    let offset_x = -((max_x - min_x) / 2.0);
+    let offset_y = -((max_y - min_y) / 2.0);
+    for polyline in polylines {
+        for pair in polyline {
+            pair.x += offset_x;
+            pair.y += offset_y;
+        }
+    }
+}
+
 fn main() {
     let param_svgfile = "SVGFILE";
     let param_name = "name";
@@ -123,10 +144,14 @@ fn main() {
              .required(false))
         .get_matches();
 
+    // Parse SVG, convert to polylines
     let svg_string = load_svg(matches.value_of(param_svgfile).unwrap())
         .expect("Could not read SVG file");
-    let polylines = svg2polylines::parse(&svg_string)
+    let mut polylines = svg2polylines::parse(&svg_string)
         .expect("Could not parse SVG file");
+
+    // Post-process polylines
+    center_object(&mut polylines);
 
     let footprints = [
         make_footprint("top_placement", "Top Placement", "", &polylines),
@@ -147,5 +172,37 @@ fn main() {
 
     for line in pkg {
         println!("{}", line);
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    use svg2polylines::CoordinatePair;
+
+    #[test]
+    fn test_center_object() {
+        let mut polylines = vec![
+            vec![
+                CoordinatePair::new(0.0, 0.0),
+                CoordinatePair::new(2.0, 2.0),
+            ],
+            vec![
+                CoordinatePair::new(2.0, 2.0),
+                CoordinatePair::new(4.0, 4.0),
+            ],
+        ];
+        center_object(&mut polylines);
+        assert_eq!(polylines, vec![
+            vec![
+                CoordinatePair::new(-2.0, -2.0),
+                CoordinatePair::new(0.0, 0.0),
+            ],
+            vec![
+                CoordinatePair::new(0.0, 0.0),
+                CoordinatePair::new(2.0, 2.0),
+            ],
+        ]);
     }
 }
