@@ -15,22 +15,22 @@ struct Args {
     /// The SVG file to load
     svgfile: PathBuf,
     /// Resulting LibrePCB package name
-    #[clap(short, long)]
+    #[clap(short)]
     name: String,
     /// Resulting LibrePCB package description
-    #[clap(short, long)]
+    #[clap(short)]
     description: String,
     /// Resulting LibrePCB package author
-    #[clap(short, long)]
+    #[clap(short)]
     author: String,
     /// Resulting LibrePCB package category UUID
-    #[clap(short = 'c', long)]
+    #[clap(short = 'c')]
     pkgcat_uuid: String,
     /// Resulting LibrePCB package UUID (optional)
-    #[clap(short = 'u', long)]
+    #[clap(short = 'u')]
     pkg_uuid: Option<String>,
     /// Resulting LibrePCB package keywords (optional)
-    #[clap(short, long)]
+    #[clap(short)]
     keywords: Option<String>,
 }
 
