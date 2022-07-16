@@ -3,9 +3,9 @@ use std::{
     path::{Path, PathBuf},
 };
 
+use anyhow::{Context, Result};
 use chrono::Utc;
 use clap::{self, Parser};
-use quick_error::quick_error;
 use svg2polylines::{self, Polyline};
 use uuid::Uuid;
 
@@ -34,22 +34,11 @@ struct Args {
     keywords: Option<String>,
 }
 
-quick_error! {
-    #[derive(Debug)]
-    pub enum Error {
-        Io(err: std::io::Error) {
-            from()
-            cause(err)
-            description(err.description())
-        }
-    }
-}
-
 fn make_uuid() -> Uuid {
     Uuid::new_v4()
 }
 
-fn load_svg(path: &Path) -> Result<String, Error> {
+fn load_svg(path: &Path) -> Result<String> {
     Ok(read_to_string(path)?)
 }
 
@@ -111,10 +100,10 @@ fn make_package(
     lines
 }
 
-fn main() {
+fn main() -> Result<()> {
     let args = Args::parse();
 
-    let svg_string = load_svg(&args.svgfile).expect("Could not read SVG file");
+    let svg_string = load_svg(&args.svgfile).context("Could not read SVG file")?;
     let polylines = svg2polylines::parse(&svg_string, 0.15).expect("Could not parse SVG file");
 
     let footprints = [
@@ -137,4 +126,6 @@ fn main() {
     for line in pkg {
         println!("{}", line);
     }
+
+    Ok(())
 }
