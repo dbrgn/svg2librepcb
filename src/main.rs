@@ -115,7 +115,7 @@ fn main() {
     let args = Args::parse();
 
     let svg_string = load_svg(&args.svgfile).expect("Could not read SVG file");
-    let polylines = svg2polylines::parse(&svg_string).expect("Could not parse SVG file");
+    let polylines = svg2polylines::parse(&svg_string, 0.15).expect("Could not parse SVG file");
 
     let footprints = [
         make_footprint("top_placement", "Top Placement", "", &polylines),
