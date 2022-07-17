@@ -80,8 +80,12 @@ fn make_footprint(
     lines.push(format!(r#" (description "{}")"#, description));
     for polyline in polylines {
         let closed = polyline[0] == polyline[polyline.len() - 1];
+        let (width, fill) = match closed {
+            true => ("0.0", "true"),
+            false => ("0.2", "false"),
+        };
         lines.push(format!(r#" (polygon "{}" (layer {})"#, make_uuid(), layer));
-        lines.push(format!(r#"  (width 0.0) (fill {}) (grab_area true)"#, if closed { "true" } else { "false" }));
+        lines.push(format!(r#"  (width {}) (fill {}) (grab_area true)"#, width, fill));
         for pair in polyline {
             lines.push(format!(
                 r#"  (vertex (position {:.3} {:.3}) (angle 0.0))"#,
