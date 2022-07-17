@@ -41,9 +41,21 @@ struct Args {
     /// Resulting LibrePCB package UUID [default: random]
     #[clap(long, help_heading = "UUIDS")]
     uuid_pkg: Option<String>,
+    /// Resulting LibrePCB symbol UUID [default: random]
+    #[clap(long, help_heading = "UUIDS")]
+    uuid_sym: Option<String>,
+    /// Resulting LibrePCB component UUID [default: random]
+    #[clap(long, help_heading = "UUIDS")]
+    uuid_cmp: Option<String>,
+    /// Resulting LibrePCB device UUID [default: random]
+    #[clap(long, help_heading = "UUIDS")]
+    uuid_dev: Option<String>,
     /// Resulting LibrePCB package category UUID
     #[clap(long, help_heading = "UUIDS")]
-    uuid_pkgcat: String,
+    uuid_pkgcat: Option<String>,
+    /// Resulting LibrePCB symbol category UUID
+    #[clap(long, help_heading = "UUIDS")]
+    uuid_cmpcat: Option<String>,
 
     /// Generate copper layer
     #[clap(long, default_value = "true", help_heading = "LAYERS")]
@@ -83,6 +95,106 @@ enum Align {
     BottomLeft,
 }
 
+#[derive(Default)]
+struct Bounds {
+    y_min: f64,
+    y_max: f64,
+}
+
+struct Polygon {
+    /// Polygon lines
+    lines: Vec<String>,
+    /// Transformed bounds (in the LibrePCB coordinate system)
+    transformed_bounds: Bounds,
+}
+
+/// Format a float according to LibrePCB normalization rules.
+fn format_float(val: f64) -> String {
+    if val == -0.0 {
+        // Returns true for 0.0 too, but that doesn't matter
+        return "0.0".to_string();
+    }
+    let formatted = format!("{:.3}", val);
+    if formatted.ends_with('0') {
+        // 1 trailing zero
+        if formatted.chars().rev().nth(1).unwrap() == '0' {
+            // 2 trailing zeroes
+            return formatted.strip_suffix("00").unwrap().to_string();
+        }
+        return formatted.strip_suffix('0').unwrap().to_string();
+    }
+    formatted
+}
+
+fn make_polygon(layer: &str, align: Align, polylines: &[Polyline]) -> Polygon {
+    let mut lines = vec![];
+    if polylines.is_empty() {
+        return Polygon {
+            lines,
+            transformed_bounds: Bounds::default(),
+        };
+    }
+
+    // Note: In SVG, the top left point is (0, 0). The y-axis expands
+    //       downwards. In LibrePCB, the Y axis is the other way around, and
+    //       expands upwards.
+
+    // First, find bounds to allow centering
+    let first_pair = polylines[0][0];
+    let (mut x_min, mut x_max, mut y_min, mut y_max) =
+        (first_pair.x, first_pair.x, first_pair.y, first_pair.y);
+    for polyline in polylines {
+        for pair in polyline {
+            x_min = pair.x.min(x_min);
+            x_max = pair.x.max(x_max);
+            y_min = pair.y.min(y_min);
+            y_max = pair.y.max(y_max);
+        }
+    }
+
+    // Calculate offset (still in SVG coordinate mode)
+    let (dx, dy) = match align {
+        Align::None => (0.0, 0.0),
+        Align::Center => {
+            let halfwidth = (x_max - x_min) / 2.0;
+            let halfheight = (y_max - y_min) / 2.0;
+            (-x_min - halfwidth, -y_min - halfheight)
+        }
+        Align::TopLeft => (-x_min, -y_min),
+        Align::BottomLeft => (-x_min, -y_max),
+    };
+
+    // Then generate vertices
+    for polyline in polylines {
+        let closed = polyline[0] == polyline[polyline.len() - 1];
+        let (width, fill) = match closed {
+            true => ("0.0", "true"),
+            false => ("0.2", "false"),
+        };
+        lines.push(format!(r#" (polygon "{}" (layer {})"#, make_uuid(), layer));
+        lines.push(format!(
+            r#"  (width {0}) (fill {1}) (grab_area {1})"#,
+            width, fill
+        ));
+        for pair in polyline {
+            lines.push(format!(
+                r#"  (vertex (position {:.3} {:.3}) (angle 0.0))"#,
+                pair.x + dx,
+                -(pair.y + dy) // Invert axis
+            ));
+        }
+        lines.push(r#" )"#.to_string());
+    }
+
+    Polygon {
+        lines,
+        transformed_bounds: Bounds {
+            y_min: y_min + dy,
+            y_max: y_max + dy,
+        },
+    }
+}
+
 fn make_footprint(
     layer: &str,
     name: &str,
@@ -94,61 +206,66 @@ fn make_footprint(
     lines.push(format!(r#"(footprint {}"#, make_uuid()));
     lines.push(format!(r#" (name "{}")"#, name));
     lines.push(format!(r#" (description "{}")"#, description));
-
     if !polylines.is_empty() {
-        // Note: In SVG, the top left point is (0, 0). The y-axis expands
-        //       downwards. In LibrePCB, the Y axis is the other way around, and
-        //       expands upwards.
+        lines.extend_from_slice(&make_polygon(layer, align, polylines).lines);
+    }
+    lines.push(r#")"#.to_string());
+    lines
+}
 
-        // First, find bounds to allow centering
-        let first_pair = polylines[0][0];
-        let (mut x_min, mut x_max, mut y_min, mut y_max) =
-            (first_pair.x, first_pair.x, first_pair.y, first_pair.y);
-        for polyline in polylines {
-            for pair in polyline {
-                x_min = pair.x.min(x_min);
-                x_max = pair.x.max(x_max);
-                y_min = pair.y.min(y_min);
-                y_max = pair.y.max(y_max);
-            }
-        }
-
-        // Calculate offset (still in SVG coordinate mode)
-        let (dx, dy) = match align {
-            Align::None => (0.0, 0.0),
-            Align::Center => {
-                let halfwidth = (x_max - x_min) / 2.0;
-                let halfheight = (y_max - y_min) / 2.0;
-                (-x_min - halfwidth, -y_min - halfheight)
-            }
-            Align::TopLeft => (-x_min, -y_min),
-            Align::BottomLeft => (-x_min, -y_max),
-        };
-
-        // Then generate vertices
-        for polyline in polylines {
-            let closed = polyline[0] == polyline[polyline.len() - 1];
-            let (width, fill) = match closed {
-                true => ("0.0", "true"),
-                false => ("0.2", "false"),
-            };
-            lines.push(format!(r#" (polygon "{}" (layer {})"#, make_uuid(), layer));
-            lines.push(format!(
-                r#"  (width {}) (fill {}) (grab_area true)"#,
-                width, fill
-            ));
-            for pair in polyline {
-                lines.push(format!(
-                    r#"  (vertex (position {:.3} {:.3}) (angle 0.0))"#,
-                    pair.x + dx,
-                    -(pair.y + dy) // Invert axis
-                ));
-            }
-            lines.push(r#" )"#.to_string());
-        }
+fn make_symbol(
+    uuid: &str,
+    name: &str,
+    description: &str,
+    keywords: &str,
+    author: &str,
+    version: &str,
+    uuid_cmpcat: Option<&str>,
+    polylines: &[Polyline],
+) -> Vec<String> {
+    let mut lines: Vec<String> = vec![];
+    lines.push(format!(r#"(librepcb_symbol {}"#, uuid));
+    lines.push(format!(r#" (name "{}")"#, name));
+    lines.push(format!(r#" (description "{}")"#, description));
+    lines.push(format!(r#" (keywords "{}")"#, keywords));
+    lines.push(format!(r#" (author "{}")"#, author));
+    lines.push(format!(r#" (version "{}")"#, version));
+    lines.push(format!(
+        r#" (created {})"#,
+        Utc::now().to_rfc3339().replace("+00:00", "Z")
+    ));
+    lines.push(" (deprecated false)".to_string());
+    if let Some(uuid) = uuid_cmpcat {
+        lines.push(format!(r#" (category {})"#, uuid));
     }
 
-    lines.push(r#")"#.to_string());
+    // Polygon
+    let polygon = make_polygon("sym_outlines", Align::Center, polylines);
+    lines.extend_from_slice(&polygon.lines);
+
+    // Label: Value
+    lines.push(format!(
+        r#" (text {} (layer sym_values) (value "{{{{VALUE}}}}")"#,
+        make_uuid()
+    ));
+    lines.push(format!(
+        r#"  (align center top) (height 2.5) (position 0.0 {}) (rotation 0.0)"#,
+        format_float(polygon.transformed_bounds.y_min - 1.27)
+    ));
+    lines.push(" )".to_string());
+
+    // Label: Name
+    lines.push(format!(
+        r#" (text {} (layer sym_names) (value "{{{{NAME}}}}")"#,
+        make_uuid()
+    ));
+    lines.push(format!(
+        r#"  (align center bottom) (height 2.5) (position 0.0 {}) (rotation 0.0)"#,
+        format_float(polygon.transformed_bounds.y_max + 1.27)
+    ));
+    lines.push(" )".to_string());
+
+    lines.push(")".to_string());
     lines
 }
 
@@ -159,7 +276,7 @@ fn make_package(
     keywords: &str,
     author: &str,
     version: &str,
-    pkgcat: &str,
+    uuid_pkgcat: Option<&str>,
     footprints: &[Vec<String>],
 ) -> Vec<String> {
     let mut lines: Vec<String> = vec![];
@@ -174,7 +291,9 @@ fn make_package(
         Utc::now().to_rfc3339().replace("+00:00", "Z")
     ));
     lines.push(" (deprecated false)".to_string());
-    lines.push(format!(r#" (category {})"#, pkgcat));
+    if let Some(uuid) = uuid_pkgcat {
+        lines.push(format!(r#" (category {})"#, uuid));
+    }
     for footprint in footprints {
         for line in footprint {
             lines.push(format!(" {}", line));
@@ -239,6 +358,19 @@ fn main() -> Result<()> {
         ));
     }
 
+    // Generate symbol
+    let uuid_sym = args.uuid_sym.unwrap_or_else(|| make_uuid().to_string());
+    let sym = make_symbol(
+        &uuid_sym,
+        &args.name,
+        &args.description,
+        &args.author,
+        &args.keywords,
+        &args.version,
+        args.uuid_cmpcat.as_deref(),
+        &polylines,
+    );
+
     // Generate package
     let uuid_pkg = args.uuid_pkg.unwrap_or_else(|| make_uuid().to_string());
     let pkg = make_package(
@@ -248,11 +380,15 @@ fn main() -> Result<()> {
         &args.author,
         &args.keywords,
         &args.version,
-        &args.uuid_pkgcat,
+        args.uuid_pkgcat.as_deref(),
         &footprints,
     );
 
-    // Write package to library
+    // Write files to library
+    let sym_path = lib_path.join("sym").join(&uuid_sym);
+    fs::create_dir_all(&sym_path).unwrap();
+    fs::write(sym_path.join(".librepcb-sym"), "0.1").unwrap();
+    fs::write(sym_path.join("symbol.lp"), sym.join("\n")).unwrap();
     let pkg_path = lib_path.join("pkg").join(&uuid_pkg);
     fs::create_dir_all(&pkg_path).unwrap();
     fs::write(pkg_path.join(".librepcb-pkg"), "0.1").unwrap();
@@ -262,4 +398,22 @@ fn main() -> Result<()> {
     println!("{}", svg_string);
 
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_format_float() {
+        let cases = [
+            (3.14456, "3.145"),
+            (-7.0, "-7.0"),
+            (0.4, "0.4"),
+            (-0.0, "0.0"),
+        ];
+        for case in cases {
+            assert_eq!(format_float(case.0), case.1);
+        }
+    }
 }

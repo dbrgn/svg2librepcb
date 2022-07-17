@@ -19,7 +19,11 @@
     <_param name="hdr_uuids" type="description" appearance="header">UUIDs</_param>
     <_param name="intro_uuids" type="description">If you don't specify a package UUID, then a random UUID will be generated.</_param>
     <param name="uuid-pkg" type="string" _gui-text="Package UUID" />
-    <param name="uuid-pkgcat" type="string" _gui-text="Package Category UUID*" />
+    <param name="uuid-sym" type="string" _gui-text="Symbol UUID" />
+    <param name="uuid-cmp" type="string" _gui-text="Component UUID" />
+    <param name="uuid-dev" type="string" _gui-text="Device UUID" />
+    <param name="uuid-cmpcat" type="string" _gui-text="Component Category UUID" />
+    <param name="uuid-pkgcat" type="string" _gui-text="Package Category UUID" />
 
     <_param name="hdr_layers" type="description" appearance="header">Package Layers</_param>
     <_param name="intro_layers" type="description">A footprint variant will be generated for each of the checked layer types.</_param>
