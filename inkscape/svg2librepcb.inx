@@ -27,6 +27,10 @@
     <param name="layer-placement" type="boolean" _gui-text="Placement (Silkscreen)">true</param>
     <param name="layer-stopmask" type="boolean" _gui-text="Stopmask (Soldermask)">true</param>
 
+    <_param name="hdr_params" type="description" appearance="header">Conversion Parameters</_param>
+    <_param name="intro_params" type="description">Decreasing the flattening tolerance will result in smoother curves but more polygon points. Default is 0.15.</_param>
+    <param name="flattening-tolerance" type="string" _gui-text="Flattening Tolerance">0.15</param>
+
     <_param name="hdr_paths" type="description" appearance="header">Paths</_param>
     <_param name="intro_paths" type="description">The output path must point to an already existing LibrePCB library.</_param>
     <param name="outpath" type="string" _gui-text="Library Output Path*">/home/user/LibrePCB-Workspace/v0.1/libraries/local/YourLib.lplib/</param>
