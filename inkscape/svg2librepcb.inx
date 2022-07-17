@@ -30,8 +30,14 @@
     </hbox>
 
     <_param name="hdr_params" type="description" appearance="header">Conversion Parameters</_param>
-    <_param name="intro_params" type="description">Decreasing the flattening tolerance will result in smoother curves but more polygon points. Default is 0.15.</_param>
-    <param name="flattening-tolerance" type="string" _gui-text="Flattening Tolerance">0.15</param>
+    <param name="align" type="optiongroup" _gui-text="Align Centerpoint" appearance="combo">
+        <option value="bottom-left">Bottom Left</option>
+        <option value="top-left">Top Left</option>
+        <option value="center">Center</option>
+        <option value="none">None</option>
+    </param>
+    <_param name="intro_tol" type="description">Decreasing the flattening tolerance will result in smoother curves but more polygon points. Default is 0.15.</_param>
+    <param name="flattening-tolerance" type="float" min="0" max="3" precision="2" appearance="full" _gui-text="Flattening Tolerance">0.15</param>
 
     <_param name="hdr_paths" type="description" appearance="header">Paths</_param>
     <_param name="intro_paths" type="description">The output path must point to an already existing LibrePCB library.</_param>
