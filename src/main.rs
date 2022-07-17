@@ -55,6 +55,10 @@ struct Args {
     #[clap(long, default_value = "true", help_heading = "LAYERS")]
     layer_stopmask: bool,
 
+    /// Flattening tolerance
+    #[clap(long, default_value = "0.15", help_heading = "PARAMETERS")]
+    flattening_tolerance: f64,
+
     /// Passed in by Inkscape, ignored, not currently supported
     #[clap(long, hide(true))]
     id: Option<Vec<String>>,
@@ -132,7 +136,7 @@ fn main() -> Result<()> {
 
     // Load and parse SVG
     let svg_string = load_svg(&args.svgfile).context("Could not read SVG file")?;
-    let polylines = svg2polylines::parse(&svg_string, 0.15).expect("Could not parse SVG file");
+    let polylines = svg2polylines::parse(&svg_string, args.flattening_tolerance).expect("Could not parse SVG file");
 
     // Ensure that output library path exists
     let lib_path = match args.outpath.canonicalize() {
