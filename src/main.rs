@@ -346,6 +346,38 @@ fn make_package(
     lines
 }
 
+fn make_device(
+    uuid: &str,
+    name: &str,
+    description: &str,
+    keywords: &str,
+    author: &str,
+    version: &str,
+    uuid_cmp: &str,
+    uuid_pkg: &str,
+    uuid_cmpcat: Option<&str>,
+) -> Vec<String> {
+    let mut lines: Vec<String> = vec![];
+    lines.push(format!(r#"(librepcb_device {}"#, uuid));
+    lines.push(format!(r#" (name "{}")"#, name));
+    lines.push(format!(r#" (description "{}")"#, description));
+    lines.push(format!(r#" (keywords "{}")"#, keywords));
+    lines.push(format!(r#" (author "{}")"#, author));
+    lines.push(format!(r#" (version "{}")"#, version));
+    lines.push(format!(
+        r#" (created {})"#,
+        Utc::now().to_rfc3339().replace("+00:00", "Z")
+    ));
+    lines.push(r#" (deprecated false)"#.to_string());
+    if let Some(uuid) = uuid_cmpcat {
+        lines.push(format!(r#" (category {})"#, uuid));
+    }
+    lines.push(format!(r#" (component {})"#, uuid_cmp));
+    lines.push(format!(r#" (package {})"#, uuid_pkg));
+    lines.push(format!(")"));
+    lines
+}
+
 fn main() -> Result<()> {
     let args = Args::parse();
 
@@ -440,19 +472,37 @@ fn main() -> Result<()> {
         &footprints,
     );
 
+    // Generate device
+    let uuid_dev = args.uuid_dev.unwrap_or_else(|| make_uuid().to_string());
+    let dev = make_device(
+        &uuid_dev,
+        &args.name,
+        &args.description,
+        &args.author,
+        &args.keywords,
+        &args.version,
+        &uuid_cmp,
+        &uuid_pkg,
+        args.uuid_cmpcat.as_deref(),
+    );
+
     // Write files to library
     let sym_path = lib_path.join("sym").join(&uuid_sym);
     let cmp_path = lib_path.join("cmp").join(&uuid_cmp);
     let pkg_path = lib_path.join("pkg").join(&uuid_pkg);
+    let dev_path = lib_path.join("dev").join(&uuid_dev);
     fs::create_dir_all(&sym_path).unwrap();
     fs::create_dir_all(&cmp_path).unwrap();
     fs::create_dir_all(&pkg_path).unwrap();
+    fs::create_dir_all(&dev_path).unwrap();
     fs::write(sym_path.join(".librepcb-sym"), "0.1").unwrap();
     fs::write(cmp_path.join(".librepcb-cmp"), "0.1").unwrap();
     fs::write(pkg_path.join(".librepcb-pkg"), "0.1").unwrap();
+    fs::write(dev_path.join(".librepcb-dev"), "0.1").unwrap();
     fs::write(sym_path.join("symbol.lp"), sym.join("\n")).unwrap();
     fs::write(cmp_path.join("component.lp"), cmp.join("\n")).unwrap();
     fs::write(pkg_path.join("package.lp"), pkg.join("\n")).unwrap();
+    fs::write(dev_path.join("device.lp"), dev.join("\n")).unwrap();
 
     // Echo original SVG on stdout for compatibility with Inkscape.
     println!("{}", svg_string);
