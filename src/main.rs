@@ -1,4 +1,5 @@
 #![allow(clippy::too_many_arguments)]
+#![allow(clippy::useless_format)]
 
 use std::{
     fs::{self, read_to_string},
@@ -269,6 +270,48 @@ fn make_symbol(
     lines
 }
 
+fn make_component(
+    uuid: &str,
+    name: &str,
+    description: &str,
+    keywords: &str,
+    author: &str,
+    version: &str,
+    uuid_sym: &str,
+    uuid_cmpcat: Option<&str>,
+) -> Vec<String> {
+    let mut lines: Vec<String> = vec![];
+    lines.push(format!(r#"(librepcb_component {}"#, uuid));
+    lines.push(format!(r#" (name "{}")"#, name));
+    lines.push(format!(r#" (description "{}")"#, description));
+    lines.push(format!(r#" (keywords "{}")"#, keywords));
+    lines.push(format!(r#" (author "{}")"#, author));
+    lines.push(format!(r#" (version "{}")"#, version));
+    lines.push(format!(
+        r#" (created {})"#,
+        Utc::now().to_rfc3339().replace("+00:00", "Z")
+    ));
+    lines.push(r#" (deprecated false)"#.to_string());
+    if let Some(uuid) = uuid_cmpcat {
+        lines.push(format!(r#" (category {})"#, uuid));
+    }
+    lines.push(format!(r#" (schematic_only false)"#));
+    lines.push(format!(r#" (default_value "")"#));
+    lines.push(format!(r#" (prefix "")"#));
+    lines.push(format!(r#" (variant {} (norm "")"#, make_uuid()));
+    lines.push(format!(r#"  (name "default")"#));
+    lines.push(format!(r#"  (description "")"#));
+    lines.push(format!(r#"  (gate {}"#, make_uuid()));
+    lines.push(format!(r#"   (symbol {})"#, uuid_sym));
+    lines.push(format!(
+        r#"   (position 0.0 0.0) (rotation 0.0) (required true) (suffix "")"#
+    ));
+    lines.push(format!(r#"  )"#));
+    lines.push(format!(r#" )"#));
+    lines.push(format!(")"));
+    lines
+}
+
 fn make_package(
     uuid: &str,
     name: &str,
@@ -371,6 +414,19 @@ fn main() -> Result<()> {
         &polylines,
     );
 
+    // Generate component
+    let uuid_cmp = args.uuid_cmp.unwrap_or_else(|| make_uuid().to_string());
+    let cmp = make_component(
+        &uuid_cmp,
+        &args.name,
+        &args.description,
+        &args.author,
+        &args.keywords,
+        &args.version,
+        &uuid_sym,
+        args.uuid_cmpcat.as_deref(),
+    );
+
     // Generate package
     let uuid_pkg = args.uuid_pkg.unwrap_or_else(|| make_uuid().to_string());
     let pkg = make_package(
@@ -386,12 +442,16 @@ fn main() -> Result<()> {
 
     // Write files to library
     let sym_path = lib_path.join("sym").join(&uuid_sym);
-    fs::create_dir_all(&sym_path).unwrap();
-    fs::write(sym_path.join(".librepcb-sym"), "0.1").unwrap();
-    fs::write(sym_path.join("symbol.lp"), sym.join("\n")).unwrap();
+    let cmp_path = lib_path.join("cmp").join(&uuid_cmp);
     let pkg_path = lib_path.join("pkg").join(&uuid_pkg);
+    fs::create_dir_all(&sym_path).unwrap();
+    fs::create_dir_all(&cmp_path).unwrap();
     fs::create_dir_all(&pkg_path).unwrap();
+    fs::write(sym_path.join(".librepcb-sym"), "0.1").unwrap();
+    fs::write(cmp_path.join(".librepcb-cmp"), "0.1").unwrap();
     fs::write(pkg_path.join(".librepcb-pkg"), "0.1").unwrap();
+    fs::write(sym_path.join("symbol.lp"), sym.join("\n")).unwrap();
+    fs::write(cmp_path.join("component.lp"), cmp.join("\n")).unwrap();
     fs::write(pkg_path.join("package.lp"), pkg.join("\n")).unwrap();
 
     // Echo original SVG on stdout for compatibility with Inkscape.
