@@ -110,7 +110,7 @@ fn make_package(
     lines.push(format!(r#" (keywords "{}")"#, keywords));
     lines.push(format!(r#" (author "{}")"#, author));
     lines.push(format!(r#" (version "{}")"#, version));
-    lines.push(format!(r#" (created {})"#, Utc::now().to_rfc3339()));
+    lines.push(format!(r#" (created {})"#, Utc::now().to_rfc3339().replace("+00:00", "Z")));
     lines.push(" (deprecated false)".to_string());
     lines.push(format!(r#" (category {})"#, pkgcat));
     for footprint in footprints {
