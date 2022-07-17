@@ -25,3 +25,5 @@ Alternatively, during development, you can also symlink the two files:
     cargo build
     ln -s $(pwd)/target/debug/svg2librepcb ~/.config/inkscape/extensions/
     ln -s $(pwd)/inkscape/svg2librepcb.inx ~/.config/inkscape/extensions/
+
+Then, launch the extension through "Extensions > Export > Export to LibrePCB".
