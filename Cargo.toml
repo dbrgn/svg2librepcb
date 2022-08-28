@@ -8,5 +8,5 @@ edition = "2018"
 anyhow = "1"
 chrono = "0.4"
 clap = { version = "3", features = ["std", "derive"], default-features = false }
-svg2polylines = "0.7"
+svg2polylines = "0.8.1"
 uuid = { version = "1.1", features = ["v4"] }

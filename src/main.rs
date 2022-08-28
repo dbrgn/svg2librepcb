@@ -383,7 +383,7 @@ fn main() -> Result<()> {
 
     // Load and parse SVG
     let svg_string = load_svg(&args.svgfile).context("Could not read SVG file")?;
-    let polylines = svg2polylines::parse(&svg_string, args.flattening_tolerance)
+    let polylines = svg2polylines::parse(&svg_string, args.flattening_tolerance, true)
         .expect("Could not parse SVG file");
 
     // Ensure that output library path exists
