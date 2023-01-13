@@ -4,7 +4,7 @@ A small program to generate LibrePCB packages from an SVG file.
 
 ## Building
 
-Run:
+You need Rust and Cargo installed. Then run:
 
     cargo build --release
 
@@ -13,6 +13,29 @@ Then you can find the binary at `target/release/svg2librepcb`.
 ## Usage
 
 Use `svg2librepcb --help` to view the usage help.
+
+Example:
+
+    svg2librepcb \
+        --outpath ~/LibrePCB-Workspace/v0.1/libraries/local/MyLibrary.lplib/ \
+        --name MyName \
+        --author Danilo \
+        logo.svg
+
+This will result in the following files being generated in the output directory:
+
+    cmp/2288621c-6056-4531-90d1-21e9f6f72175/
+    ├── component.lp
+    └── .librepcb-cmp
+    dev/f9207d36-6bc1-41f9-a61c-cf1f9657b8e3/
+    ├── device.lp
+    └── .librepcb-dev
+    pkg/8d92aac5-2fe0-460c-baad-35e9361d5f79/
+    ├── .librepcb-pkg
+    └── package.lp
+    sym/c1fbc16a-a380-4387-aee7-a3facd5f50aa/
+    ├── .librepcb-sym
+    └── symbol.lp
 
 ## SVG Constraints
 
