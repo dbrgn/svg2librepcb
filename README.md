@@ -1,6 +1,7 @@
 # svg2librepcb
 
-A small program to generate LibrePCB packages from an SVG file.
+A small program to generate LibrePCB packages from an SVG file, along with an
+Inkscape extension.
 
 ## Building
 
@@ -10,7 +11,7 @@ You need Rust and Cargo installed. Then run:
 
 Then you can find the binary at `target/release/svg2librepcb`.
 
-## Usage
+## CLI Usage
 
 Use `svg2librepcb --help` to view the usage help.
 
