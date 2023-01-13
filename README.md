@@ -45,9 +45,12 @@ This will result in the following files being generated in the output directory:
 
 ## Inkscape Extension
 
-You can use this program as an Inkscape extension. Simply create a release
-build and copy the binary and the extension file to the Inkscape extension
-directory:
+You can use this program as an Inkscape extension:
+
+![Screenshot](inkscape/screenshot.png)
+
+To use it, create a release build and copy the binary and the extension file to
+the Inkscape extension directory:
 
     cargo build --release
     cp target/release/svg2librepcb ~/.config/inkscape/extensions/
