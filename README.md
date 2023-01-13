@@ -2,7 +2,17 @@
 
 A small program to generate LibrePCB packages from an SVG file.
 
-**WORK IN PROGRESS!**
+## Building
+
+Run:
+
+    cargo build --release
+
+Then you can find the binary at `target/release/svg2librepcb`.
+
+## Usage
+
+Use `svg2librepcb --help` to view the usage help.
 
 ## SVG Constraints
 
