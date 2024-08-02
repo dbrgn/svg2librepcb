@@ -42,7 +42,7 @@ This will result in the following files being generated in the output directory:
 
 - Only paths are considered, without transformations or style.
 - If you have an object that consists of outer and inner paths (e.g. a donut
-  shape), you need to join the inner and outer path.
+  shape), you need to join the inner and outer path. The "Cut Closed Loops" section of [this](https://learn.sparkfun.com/tutorials/importing-custom-images-into-eagle/method-1-svg-to-polygon#:~:text=pop%2Dup%20window-,Cut%20Closed%20Loops,-Any%20shapes%20that) SparkFun tutorial can help with that.
 
 ## Inkscape Extension
 
